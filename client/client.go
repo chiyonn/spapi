@@ -2,21 +2,26 @@ package client
 
 import (
 	"errors"
+	"net/http"
 )
 
 type Client struct {
-	BaseURL       string
-	MarketplaceID string
+	HttpClient 		 *http.Client
+	BaseURL          string
+	MarketplaceID    string
+	RateLimitManager RateLimitManager
 }
 
-func NewClient(countryCode string) (*Client, error) {
-	reg, ok := countryRegionMap[countryCode]
+func NewClient(cc string, rlm RateLimitManager) (*Client, error) {
+	reg, ok := countryRegionMap[cc]
 	if !ok {
 		return nil, ErrRegionNotFound
 	}
 	return &Client{
-		BaseURL:       reg.BaseURL,
-		MarketplaceID: reg.MarketplaceID,
+		HttpClient: &http.Client{},
+		BaseURL:          reg.BaseURL,
+		MarketplaceID:    reg.MarketplaceID,
+		RateLimitManager: rlm,
 	}, nil
 }
 

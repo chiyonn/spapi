@@ -7,7 +7,9 @@ import (
 )
 
 func TestNewClient_Success(t *testing.T) {
-	c, err := client.NewClient("JP")
+	rlm := client.NewRateLimitManager()
+	c, err := client.NewClient("JP", rlm)
+
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -22,7 +24,8 @@ func TestNewClient_Success(t *testing.T) {
 }
 
 func TestNewClient_Failure(t *testing.T) {
-	c, err := client.NewClient("XX")
+	rlm := client.NewRateLimitManager()
+	c, err := client.NewClient("XX", rlm)
 	if err == nil {
 		t.Fatal("Expected error, got nil")
 	}
