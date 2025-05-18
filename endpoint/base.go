@@ -9,18 +9,18 @@ import (
 )
 
 type APIEndpoint struct {
+	c    	  *client.Client
 	Path      string
 	Method    string
 	Rate      float64
 	Burst     int
 	RateKey   string
-	Client    *client.Client
 	BuildReq  func() (*http.Request, error)
 	ParseResp func(*http.Response) (any, error)
 }
 
 func (ep *APIEndpoint) Do(ctx context.Context) (any, error) {
-	if err := ep.Client.RateLimitManager.Wait(ctx, ep.RateKey); err != nil {
+	if err := ep.c.RateLimitManager.Wait(ctx, ep.RateKey); err != nil {
 		return nil, err
 	}
 
@@ -29,7 +29,14 @@ func (ep *APIEndpoint) Do(ctx context.Context) (any, error) {
 		return nil, err
 	}
 
-	resp, err := ep.Client.HttpClient.Do(req)
+	accessToken, err := ep.c.GetAccessToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-amz-access-token", *accessToken)
+
+	resp, err := ep.c.HttpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -59,13 +66,13 @@ func NewEndpoint(client *client.Client, method string, path string, rate float64
 	}
 
 	endpoint := APIEndpoint{
-		Client:  client,
+		c:  client,
 		Method:  method,
 		Path:    path,
 		RateKey: key,
 	}
 
-	err := endpoint.Client.RateLimitManager.Register(key, rate, burst)
+	err := endpoint.c.RateLimitManager.Register(key, rate, burst)
 	if err != nil {
 		return nil, ErrInitRateLimitManager
 	}
