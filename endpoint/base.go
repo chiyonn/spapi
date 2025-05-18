@@ -40,22 +40,22 @@ func (ep *APIEndpoint) Do(ctx context.Context) (any, error) {
 
 func NewEndpoint(client *client.Client, method string, path string, rate float64, burst int, key string) (*APIEndpoint, error) {
 	if client == nil {
-		return nil, errors.New("client must not be nil")
+		return nil, ErrEmptyClientDetected
 	}
 	if method == "" {
-		return nil, errors.New("method must not be empty")
+		return nil, ErrEmptyMethodDetected
 	}
 	if path == "" {
-		return nil, errors.New("path must not be empty")
+		return nil, ErrEmptyPathDetected
 	}
 	if key == "" {
-		return nil, errors.New("rate key must not be empty")
+		return nil, ErrEmptyRateKeyDetected
 	}
 	if rate <= 0 {
-		return nil, errors.New("rate must be greater than 0")
+		return nil, ErrEmptyRateDetected
 	}
 	if burst <= 0 {
-		return nil, errors.New("burst must be greater than 0")
+		return nil, ErrEmptyBurstRateDetected
 	}
 
 	endpoint := APIEndpoint{
@@ -72,4 +72,12 @@ func NewEndpoint(client *client.Client, method string, path string, rate float64
 	return &endpoint, nil
 }
 
-var ErrInitRateLimitManager = errors.New("failed to initialize RateLimitManager")
+var (
+	ErrInitRateLimitManager   = errors.New("failed to initialize RateLimitManager")
+	ErrEmptyClientDetected    = errors.New("client must not be nil")
+	ErrEmptyMethodDetected    = errors.New("method must not be nil")
+	ErrEmptyPathDetected      = errors.New("path must not be nil")
+	ErrEmptyRateKeyDetected   = errors.New("rate key must not be nil")
+	ErrEmptyRateDetected      = errors.New("rate must not be nil")
+	ErrEmptyBurstRateDetected = errors.New("rate burst not be nil")
+)
