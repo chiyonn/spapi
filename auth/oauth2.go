@@ -12,7 +12,7 @@ import (
     "time"
 )
 
-const tokenEndpoint = "https://api.amazon.com/auth/o2/token"
+var tokenEndpoint = "https://api.amazon.com/auth/o2/token"
 
 type OAuth2Authenticator struct {
     Client       *http.Client
