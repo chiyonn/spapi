@@ -11,10 +11,16 @@ import (
 func TestGetInventorySummary(t *testing.T) {
 	httpClient := testutil.NewMockHTTPClient(`{"summary": "test summary"}`, 200)
 
+	rateLimiter := client.NewRateLimitManager()
+	err := rateLimiter.Register("inventory.GetInventorySummary", 2, 2)
+	if err != nil {
+		t.Fatalf("failed to register rate limiter: %v", err)
+	}
+
 	cli := &client.Client{
 		HttpClient:       httpClient,
 		BaseURL:          "https://mock-api.amazon.com",
-		RateLimitManager: client.NewRateLimitManager(),
+		RateLimitManager: rateLimiter,
 	}
 
 	api := endpoint.NewInventoryAPI(cli)

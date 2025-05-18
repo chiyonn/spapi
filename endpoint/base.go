@@ -20,6 +20,10 @@ type APIEndpoint struct {
 }
 
 func (ep *APIEndpoint) Do(ctx context.Context) (any, error) {
+	if err := ep.Client.RateLimitManager.Wait(ctx, ep.RateKey); err != nil {
+		return nil, err
+	}
+
 	req, err := ep.BuildReq()
 	if err != nil {
 		return nil, err
@@ -35,11 +39,32 @@ func (ep *APIEndpoint) Do(ctx context.Context) (any, error) {
 }
 
 func NewEndpoint(client *client.Client, method string, path string, rate float64, burst int, key string) (*APIEndpoint, error) {
-	endpoint := APIEndpoint{
-		Client: client,
-		Method: method,
-		Path:   path,
+	if client == nil {
+		return nil, errors.New("client must not be nil")
 	}
+	if method == "" {
+		return nil, errors.New("method must not be empty")
+	}
+	if path == "" {
+		return nil, errors.New("path must not be empty")
+	}
+	if key == "" {
+		return nil, errors.New("rate key must not be empty")
+	}
+	if rate <= 0 {
+		return nil, errors.New("rate must be greater than 0")
+	}
+	if burst <= 0 {
+		return nil, errors.New("burst must be greater than 0")
+	}
+
+	endpoint := APIEndpoint{
+		Client:  client,
+		Method:  method,
+		Path:    path,
+		RateKey: key,
+	}
+
 	err := endpoint.Client.RateLimitManager.Register(key, rate, burst)
 	if err != nil {
 		return nil, ErrInitRateLimitManager

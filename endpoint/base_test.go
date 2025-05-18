@@ -15,6 +15,7 @@ import (
 // DummyRateLimitManager mocks Register behavior
 type DummyRateLimitManager struct {
 	RegisterFunc func(key string, rate float64, burst int) error
+	WaitFunc     func(ctx context.Context, key string) error
 }
 
 func (d *DummyRateLimitManager) Register(key string, rate float64, burst int) error {
@@ -22,6 +23,13 @@ func (d *DummyRateLimitManager) Register(key string, rate float64, burst int) er
 		return d.RegisterFunc(key, rate, burst)
 	}
 	return nil
+}
+
+func (d *DummyRateLimitManager) Wait(ctx context.Context, key string) error {
+	if d.WaitFunc != nil {
+		return d.WaitFunc(ctx, key)
+	}
+	return nil // default no-op for testing
 }
 
 // Dummy HTTP client to simulate API server
@@ -71,10 +79,25 @@ func TestDo_Success(t *testing.T) {
 }
 
 func TestDo_BuildReqError(t *testing.T) {
+	mockClient := &client.Client{
+		HttpClient: http.DefaultClient,
+		BaseURL:    "https://example.com",
+		RateLimitManager: &DummyRateLimitManager{
+			WaitFunc: func(ctx context.Context, key string) error {
+				return nil // noop
+			},
+		},
+	}
+
 	endpoint := &endpoint.APIEndpoint{
+		Client: mockClient,
 		BuildReq: func() (*http.Request, error) {
 			return nil, errors.New("build error")
 		},
+		ParseResp: func(resp *http.Response) (any, error) {
+			return nil, nil
+		},
+		RateKey: "test.endpoint",
 	}
 
 	_, err := endpoint.Do(context.Background())
