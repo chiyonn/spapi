@@ -65,18 +65,20 @@ func (a *OAuth2Authenticator) GetAccessToken(ctx context.Context) (string, error
         return "", fmt.Errorf("token fetch failed: %d %s", resp.StatusCode, string(body))
     }
 
-    var res struct {
-        AccessToken string `json:"access_token"`
-        ExpiresIn   int    `json:"expires_in"` // seconds
-    }
+	var res struct {
+		AccessToken string `json:"access_token"`
+		ExpiresIn   int    `json:"expires_in"`
+	}
 
-    if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-        return "", fmt.Errorf("failed to decode token response: %w", err)
-    }
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		return "", fmt.Errorf("failed to decode token response: %w", err)
+	}
 
-    a.accessToken = res.AccessToken
-    a.expiresAt = time.Now().Add(time.Duration(res.ExpiresIn-60) * time.Second)
+	token := NewToken(res.AccessToken, res.ExpiresIn)
 
-    return a.accessToken, nil
+	a.accessToken = token.AccessToken
+	a.expiresAt = token.ExpiresAt
+
+	return token.AccessToken, nil
 }
 
