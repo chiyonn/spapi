@@ -14,17 +14,16 @@ type Client struct {
     Auth             auth.Authenticator
 }
 
-func NewClient(cc string, cfg *auth.AuthConfig, rlm RateLimitManager) (*Client, error) {
+func NewClient(cli *http.Client, cc string, cfg *auth.AuthConfig, rlm RateLimitManager) (*Client, error) {
     reg, ok := countryRegionMap[cc]
     if !ok {
         return nil, ErrRegionNotFound
     }
 
-    httpClient := &http.Client{} // or injected externally
-    authenticator := auth.NewOAuth2Authenticator(httpClient, cfg)
+    authenticator := auth.NewOAuth2Authenticator(cli, cfg)
 
     return &Client{
-        HttpClient:       httpClient,
+        HttpClient:       cli,
         BaseURL:          reg.BaseURL,
         MarketplaceID:    reg.MarketplaceID,
         RateLimitManager: rlm,
