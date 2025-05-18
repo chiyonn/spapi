@@ -29,12 +29,12 @@ func (ep *APIEndpoint) Do(ctx context.Context) (any, error) {
 		return nil, err
 	}
 
-	accessToken, err := ep.c.GetAccessToken(ctx)
+	token, err := ep.c.Auth.GetAccessToken(ctx)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-amz-access-token", *accessToken)
+	req.Header.Set("x-amz-access-token", token)
 
 	resp, err := ep.c.HttpClient.Do(req)
 	if err != nil {
