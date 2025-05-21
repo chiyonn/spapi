@@ -20,6 +20,10 @@ type APIEndpoint struct {
 }
 
 func (ep *APIEndpoint) Do(ctx context.Context) (any, error) {
+	if ep.c == nil || ep.c.HttpClient == nil {
+		return nil, errors.New("client or HttpClient is nil")
+	}
+
 	if err := ep.c.RateLimitManager.Wait(ctx, ep.RateKey); err != nil {
 		return nil, err
 	}
@@ -27,6 +31,9 @@ func (ep *APIEndpoint) Do(ctx context.Context) (any, error) {
 	req, err := ep.BuildReq()
 	if err != nil {
 		return nil, err
+	}
+	if req == nil {
+		return nil, errors.New("BuildReq returned nil request")
 	}
 
 	token, err := ep.c.Auth.GetAccessToken(ctx)

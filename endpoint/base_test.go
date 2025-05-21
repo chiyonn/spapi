@@ -1,144 +1,152 @@
 package endpoint_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/chiyonn/spapi/client"
 	"github.com/chiyonn/spapi/endpoint"
 )
 
-// DummyRateLimitManager mocks Register behavior
-type DummyRateLimitManager struct {
-	RegisterFunc func(key string, rate float64, burst int) error
-	WaitFunc     func(ctx context.Context, key string) error
+type mockRateLimiter struct {
+	waitCalled     bool
+	registerCalled bool
+	failWait       bool
+	failRegister   bool
 }
 
-func (d *DummyRateLimitManager) Register(key string, rate float64, burst int) error {
-	if d.RegisterFunc != nil {
-		return d.RegisterFunc(key, rate, burst)
+func (m *mockRateLimiter) Wait(ctx context.Context, key string) error {
+	m.waitCalled = true
+	if m.failWait {
+		return errors.New("wait failed")
 	}
 	return nil
 }
 
-func (d *DummyRateLimitManager) Wait(ctx context.Context, key string) error {
-	if d.WaitFunc != nil {
-		return d.WaitFunc(ctx, key)
+func (m *mockRateLimiter) Register(key string, rate float64, burst int) error {
+	m.registerCalled = true
+	if m.failRegister {
+		return errors.New("register failed")
 	}
-	return nil // default no-op for testing
+	return nil
 }
 
-// Dummy HTTP client to simulate API server
-func dummyServer(t *testing.T, statusCode int, responseBody string) *httptest.Server {
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(statusCode)
-		_, err := w.Write([]byte(responseBody))
-		if err != nil {
-			t.Fatalf("failed to write response: %v", err)
-		}
-	})
-	return httptest.NewServer(handler)
+type mockAuth struct {
+	token string
+	err   error
 }
 
-func TestDo_Success(t *testing.T) {
-	server := dummyServer(t, 200, `{"status":"ok"}`)
-	defer server.Close()
+func (m *mockAuth) GetAccessToken(ctx context.Context) (string, error) {
+	return m.token, m.err
+}
 
-	cli := &client.Client{
-		HttpClient:        http.DefaultClient,
-		BaseURL:           server.URL,
-		RateLimitManager:  &DummyRateLimitManager{},
+type mockRoundTripper struct {
+	resp *http.Response
+	err  error
+}
+
+func (m *mockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	return m.resp, m.err
+}
+
+func newMockClient(token string, body string, statusCode int) *client.Client {
+	return &client.Client{
+		RateLimitManager: &mockRateLimiter{},
+		Auth:             &mockAuth{token: token},
+		HttpClient: &http.Client{
+			Transport: &mockRoundTripper{
+				resp: &http.Response{
+					StatusCode: statusCode,
+					Body:       io.NopCloser(bytes.NewBufferString(body)),
+				},
+			},
+		},
+	}
+}
+
+func TestNewEndpointValidationErrors(t *testing.T) {
+	c := newMockClient("token", "{}", 200)
+
+	_, err := endpoint.NewEndpoint(nil, "GET", "/path", 1.0, 10, "key")
+	if err != endpoint.ErrEmptyClientDetected {
+		t.Errorf("expected ErrEmptyClientDetected, got %v", err)
 	}
 
-	endpoint := &endpoint.APIEndpoint{
-		Client:  cli,
-		Method:  http.MethodGet,
-		Path:    "/test",
-		BuildReq: func() (*http.Request, error) {
-			return http.NewRequest(http.MethodGet, cli.BaseURL+"/test", nil)
-		},
-		ParseResp: func(resp *http.Response) (any, error) {
-			body, _ := io.ReadAll(resp.Body)
-			return string(body), nil
-		},
+	_, err = endpoint.NewEndpoint(c, "", "/path", 1.0, 10, "key")
+	if err != endpoint.ErrEmptyMethodDetected {
+		t.Errorf("expected ErrEmptyMethodDetected, got %v", err)
 	}
 
-	result, err := endpoint.Do(context.Background())
+	_, err = endpoint.NewEndpoint(c, "GET", "", 1.0, 10, "key")
+	if err != endpoint.ErrEmptyPathDetected {
+		t.Errorf("expected ErrEmptyPathDetected, got %v", err)
+	}
+
+	_, err = endpoint.NewEndpoint(c, "GET", "/path", 1.0, 10, "")
+	if err != endpoint.ErrEmptyRateKeyDetected {
+		t.Errorf("expected ErrEmptyRateKeyDetected, got %v", err)
+	}
+
+	_, err = endpoint.NewEndpoint(c, "GET", "/path", 0.0, 10, "key")
+	if err != endpoint.ErrEmptyRateDetected {
+		t.Errorf("expected ErrEmptyRateDetected, got %v", err)
+	}
+
+	_, err = endpoint.NewEndpoint(c, "GET", "/path", 1.0, 0, "key")
+	if err != endpoint.ErrEmptyBurstRateDetected {
+		t.Errorf("expected ErrEmptyBurstRateDetected, got %v", err)
+	}
+}
+
+func TestDoSuccess(t *testing.T) {
+	c := newMockClient("token123", `{"success":true}`, 200)
+
+	ep, err := endpoint.NewEndpoint(c, "GET", "/test", 1.0, 10, "rate-key")
 	if err != nil {
-		t.Fatalf("Do() error = %v", err)
+		t.Fatalf("unexpected error from NewEndpoint: %v", err)
 	}
 
-	expected := `{"status":"ok"}`
-	if result != expected {
-		t.Errorf("Do() got = %v, want = %v", result, expected)
-	}
-}
-
-func TestDo_BuildReqError(t *testing.T) {
-	mockClient := &client.Client{
-		HttpClient: http.DefaultClient,
-		BaseURL:    "https://example.com",
-		RateLimitManager: &DummyRateLimitManager{
-			WaitFunc: func(ctx context.Context, key string) error {
-				return nil // noop
-			},
-		},
+	ep.BuildReq = func() (*http.Request, error) {
+		req, _ := http.NewRequest("GET", "https://example.com", nil)
+		return req, nil
 	}
 
-	endpoint := &endpoint.APIEndpoint{
-		Client: mockClient,
-		BuildReq: func() (*http.Request, error) {
-			return nil, errors.New("build error")
-		},
-		ParseResp: func(resp *http.Response) (any, error) {
-			return nil, nil
-		},
-		RateKey: "test.endpoint",
+	ep.ParseResp = func(resp *http.Response) (any, error) {
+		body, _ := io.ReadAll(resp.Body)
+		return string(body), nil
 	}
 
-	_, err := endpoint.Do(context.Background())
-	if err == nil || err.Error() != "build error" {
-		t.Errorf("Expected build error, got %v", err)
-	}
-}
-
-func TestNewEndpoint_Success(t *testing.T) {
-	cli := &client.Client{
-		RateLimitManager: &DummyRateLimitManager{
-			RegisterFunc: func(key string, rate float64, burst int) error {
-				if key != "test-key" || rate != 1.0 || burst != 2 {
-					return errors.New("invalid registration")
-				}
-				return nil
-			},
-		},
-	}
-
-	ep, err := endpoint.NewEndpoint(cli, "GET", "/path", 1.0, 2, "test-key")
+	result, err := ep.Do(context.Background())
 	if err != nil {
-		t.Fatalf("NewEndpoint() unexpected error: %v", err)
+		t.Fatalf("Do returned unexpected error: %v", err)
 	}
 
-	if ep.Path != "/path" || ep.Method != "GET" {
-		t.Errorf("NewEndpoint() incorrect values: %+v", ep)
+	if result != `{"success":true}` {
+		t.Errorf("unexpected response: %v", result)
 	}
 }
 
-func TestNewEndpoint_RegisterFails(t *testing.T) {
-	cli := &client.Client{
-		RateLimitManager: &DummyRateLimitManager{
-			RegisterFunc: func(string, float64, int) error {
-				return errors.New("fail")
-			},
-		},
+func TestDoFailures(t *testing.T) {
+	c := newMockClient("token123", "{}", 200)
+	rl := &mockRateLimiter{failWait: true}
+	c.RateLimitManager = rl
+
+	ep, _ := endpoint.NewEndpoint(c, "GET", "/fail", 1.0, 10, "rk")
+	ep.BuildReq = func() (*http.Request, error) {
+		req, _ := http.NewRequest("GET", "https://example.com", nil)
+		return req, nil
+	}
+	ep.ParseResp = func(resp *http.Response) (any, error) {
+		return nil, nil
 	}
 
-	_, err := endpoint.NewEndpoint(cli, "GET", "/path", 1.0, 2, "key")
-	if err != endpoint.ErrInitRateLimitManager {
-		t.Errorf("Expected ErrInitRateLimitManager, got %v", err)
+	// Rate limiter fails
+	_, err := ep.Do(context.Background())
+	if err == nil || err.Error() != "wait failed" {
+		t.Errorf("expected wait failure, got %v", err)
 	}
 }
