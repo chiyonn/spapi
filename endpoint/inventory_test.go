@@ -2,6 +2,7 @@
 package endpoint_test
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"os"
@@ -26,6 +27,20 @@ func loadResponseJSON(t *testing.T, name string) string {
 	return string(bytes)
 }
 
+func loadResponseStruct[T any](t *testing.T, name string) T {
+	t.Helper()
+	path := filepath.Join("testdata", name)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("failed to read test JSON: %v", err)
+	}
+	var result T
+	if err := json.Unmarshal(data, &result); err != nil {
+		t.Fatalf("failed to unmarshal test JSON: %v", err)
+	}
+	return result
+}
+
 func TestGetInventorySummary_Success(t *testing.T) {
 	body := loadResponseJSON(t, "get_inventory_summary_response.json")
 	client := testutil.NewMockedClient(t, func(req *http.Request) *http.Response {
@@ -42,10 +57,9 @@ func TestGetInventorySummary_Success(t *testing.T) {
 	got, err := api.GetInventorySummary()
 
 	assert.NoError(t, err)
-	assert.Equal(t,
-		map[string]interface{}{"summary": "value"},
-		got,
-	)
+
+	expected := loadResponseStruct[*endpoint.GetInventorySummariesResponse](t, "inventory_summary.json")
+	assert.Equal(t, expected, got)
 }
 
 func TestGetInventorySummary_BadJSON(t *testing.T) {
