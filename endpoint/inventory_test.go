@@ -41,7 +41,7 @@ func loadResponseStruct[T any](t *testing.T, name string) T {
 	return result
 }
 
-func TestGetInventorySummary_Success(t *testing.T) {
+func TestGetInventorySummaries_Success(t *testing.T) {
 	body := loadResponseJSON(t, "get_inventory_summary_response.json")
 	client := testutil.NewMockedClient(t, func(req *http.Request) *http.Response {
 		assert.Equal(t, "/fba/inventory/v1/summaries", req.URL.Path)
@@ -54,7 +54,7 @@ func TestGetInventorySummary_Success(t *testing.T) {
 	})
 
 	api := endpoint.NewInventoryAPI(client)
-	got, err := api.GetInventorySummary()
+	got, err := api.GetInventorySummaries()
 
 	assert.NoError(t, err)
 
@@ -62,7 +62,7 @@ func TestGetInventorySummary_Success(t *testing.T) {
 	assert.Equal(t, expected, got)
 }
 
-func TestGetInventorySummary_BadJSON(t *testing.T) {
+func TestGetInventorySummaries_BadJSON(t *testing.T) {
 	client := testutil.NewMockedClient(t, func(req *http.Request) *http.Response {
 		return &http.Response{
 			StatusCode: 200,
@@ -72,7 +72,7 @@ func TestGetInventorySummary_BadJSON(t *testing.T) {
 	})
 
 	api := endpoint.NewInventoryAPI(client)
-	_, err := api.GetInventorySummary()
+	_, err := api.GetInventorySummaries()
 
 	assert.Error(t, err) // JSON デコード失敗を期待
 }

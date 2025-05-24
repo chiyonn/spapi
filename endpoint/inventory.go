@@ -17,10 +17,10 @@ func NewInventoryAPI(client *client.Client) *InventoryAPI {
 	return &InventoryAPI{client: client}
 }
 
-func (api *InventoryAPI) GetInventorySummary() (*GetInventorySummariesResponse, error) {
+func (api *InventoryAPI) GetInventorySummaries() (*GetInventorySummariesResponse, error) {
 	const path = "/fba/inventory/v1/summaries"
 
-	endpoint, err := NewEndpoint(api.client, http.MethodGet, path, 2, 2, "inventory.GetInventorySummary")
+	endpoint, err := NewEndpoint(api.client, http.MethodGet, path, 2, 2, "inventory.GetInventorySummaries")
 	if err != nil {
 		return nil, err
 	}
