@@ -7,7 +7,7 @@ import (
 )
 
 type Client struct {
-    HttpClient       *http.Client
+    HTTPClient       *http.Client
     BaseURL          string
     MarketplaceID    string
     RateLimitManager RateLimitManager
@@ -23,7 +23,7 @@ func NewClient(cli *http.Client, cc string, cfg *auth.AuthConfig, rlm RateLimitM
     authenticator := auth.NewOAuth2Authenticator(cli, cfg)
 
     return &Client{
-        HttpClient:       cli,
+        HTTPClient:       cli,
         BaseURL:          reg.BaseURL,
         MarketplaceID:    reg.MarketplaceID,
         RateLimitManager: rlm,

@@ -20,8 +20,8 @@ type APIEndpoint struct {
 }
 
 func (ep *APIEndpoint) Do(ctx context.Context) (any, error) {
-	if ep.c == nil || ep.c.HttpClient == nil {
-		return nil, errors.New("client or HttpClient is nil")
+	if ep.c == nil || ep.c.HTTPClient == nil {
+		return nil, errors.New("client or HTTPClient is nil")
 	}
 
 	if err := ep.c.RateLimitManager.Wait(ctx, ep.RateKey); err != nil {
@@ -43,7 +43,7 @@ func (ep *APIEndpoint) Do(ctx context.Context) (any, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-amz-access-token", token)
 
-	resp, err := ep.c.HttpClient.Do(req)
+	resp, err := ep.c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -52,6 +52,7 @@ func (ep *APIEndpoint) Do(ctx context.Context) (any, error) {
 	return ep.ParseResp(resp)
 }
 
+// TODO: key, rate, bust must combined as a struct
 func NewEndpoint(client *client.Client, method string, path string, rate float64, burst int, key string) (*APIEndpoint, error) {
 	if client == nil {
 		return nil, ErrEmptyClientDetected

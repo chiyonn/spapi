@@ -57,7 +57,7 @@ func newMockClient(token string, body string, statusCode int) *client.Client {
 	return &client.Client{
 		RateLimitManager: &mockRateLimiter{},
 		Auth:             &mockAuth{token: token},
-		HttpClient: &http.Client{
+		HTTPClient: &http.Client{
 			Transport: &mockRoundTripper{
 				resp: &http.Response{
 					StatusCode: statusCode,
