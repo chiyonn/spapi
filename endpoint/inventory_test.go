@@ -53,8 +53,13 @@ func TestGetInventorySummaries_Success(t *testing.T) {
 		}
 	})
 
+	params := &endpoint.GetInventorySummariesParams{
+		GranularityType: "Marketplace",
+		GranularityId: "maketplace_id",
+	}
+
 	api := endpoint.NewInventoryAPI(client)
-	got, err := api.GetInventorySummaries()
+	got, err := api.GetInventorySummaries(params)
 
 	assert.NoError(t, err)
 
@@ -71,8 +76,13 @@ func TestGetInventorySummaries_BadJSON(t *testing.T) {
 		}
 	})
 
+	params := &endpoint.GetInventorySummariesParams{
+		GranularityType: "Marketplace",
+		GranularityId: "maketplace_id",
+	}
+
 	api := endpoint.NewInventoryAPI(client)
-	_, err := api.GetInventorySummaries()
+	_, err := api.GetInventorySummaries(params)
 
 	assert.Error(t, err) // JSON デコード失敗を期待
 }

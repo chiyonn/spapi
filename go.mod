@@ -3,6 +3,7 @@ module github.com/chiyonn/spapi
 go 1.23.9
 
 require (
+	github.com/google/go-querystring v1.1.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/time v0.11.0
 )

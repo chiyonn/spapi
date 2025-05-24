@@ -7,19 +7,15 @@ import (
 )
 
 type GetInventorySummariesParams struct {
-	Details         *bool      `query:"details"`
-	GranularityType string    `query:"granularityType"`
-	GranularityId   string    `query:"granularityId"`
-	StartDateTime   *time.Time `query:"startDateTime"`
-	SellerSkus      *[]string  `query:"sellerSkus"`
-	SellerSku       *string    `query:"sellerSku"`
-	NextToken       *string    `query:"nextToken"`
-	MarketplaceIds  []string  `query:"marketplaceIds"`
+	Details         *bool      `url:"details"`
+	GranularityType string    `url:"granularityType"`
+	GranularityId   string    `url:"granularityId"`
+	StartDateTime   *time.Time `url:"startDateTime"`
+	SellerSkus      *[]string  `url:"sellerSkus"`
+	SellerSku       *string    `url:"sellerSku"`
+	NextToken       *string    `url:"nextToken"`
+	MarketplaceIds  []string  `url:"marketplaceIds"`
 }
-
-//func (p *GetInventorySummariesParams) Stringfy() string {
-//	return queryutil.StructToQuery(p).Encode()
-//}
 
 type GetInventorySummariesResponse struct {
 	Payload    *GetInventorySummariesResult `json:"payload"`

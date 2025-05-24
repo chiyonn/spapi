@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/chiyonn/spapi/client"
+	"github.com/google/go-querystring/query"
 )
 
 type InventoryAPI struct {
@@ -17,7 +18,7 @@ func NewInventoryAPI(client *client.Client) *InventoryAPI {
 	return &InventoryAPI{client: client}
 }
 
-func (api *InventoryAPI) GetInventorySummaries() (*GetInventorySummariesResponse, error) {
+func (api *InventoryAPI) GetInventorySummaries(params *GetInventorySummariesParams) (*GetInventorySummariesResponse, error) {
 	const path = "/fba/inventory/v1/summaries"
 
 	endpoint, err := NewEndpoint(api.client, http.MethodGet, path, 2, 2, "inventory.GetInventorySummaries")
@@ -26,7 +27,20 @@ func (api *InventoryAPI) GetInventorySummaries() (*GetInventorySummariesResponse
 	}
 
 	endpoint.BuildReq = func() (*http.Request, error) {
-		return http.NewRequest(http.MethodGet, api.client.BaseURL+path, nil)
+		req, err := http.NewRequest(http.MethodGet, api.client.BaseURL+path, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		if params != nil {
+			values, err := query.Values(params)
+			if err != nil {
+				return nil, fmt.Errorf("failed to encode query params: %w", err)
+			}
+			req.URL.RawQuery = values.Encode()
+		}
+
+		return req, nil
 	}
 
 	endpoint.ParseResp = func(resp *http.Response) (any, error) {
