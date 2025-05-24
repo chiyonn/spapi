@@ -24,7 +24,7 @@ type GetInventorySummariesParams struct {
 type GetInventorySummariesResponse struct {
 	Payload    *GetInventorySummariesResult `json:"payload"`
 	Pagination *model.Pagination            `json:"pagination"`
-	Errors     *model.ErrorList             `json:"errors"`
+	Errors     []*model.Error 				`json:"errors"`
 }
 
 type GetInventorySummariesResult struct {
@@ -40,7 +40,7 @@ type InventorySummary struct {
 	InventoryDetails *InventoryDetails  `json:"inventoryDetails"`
 	LastUpdatedTime  *time.Time         `json:"lastUpdatedTime"`
 	ProductName      *string            `json:"productName"`
-	TotalQuantity    *string            `json:"totalQuantity"`
+	TotalQuantity    *int	            `json:"totalQuantity"`
 	Stores           *[]string          `json:"stores"`
 }
 
