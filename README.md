@@ -42,7 +42,7 @@ import (
 
 	"github.com/chiyonn/spapi/auth"
 	"github.com/chiyonn/spapi/client"
-	"github.com/chiyonn/spapi/endpoint"
+	"github.com/chiyonn/spapi/endpoint/inventory"
 )
 
 func main() {
@@ -53,9 +53,9 @@ func main() {
 	)
 
 	cli, _ := client.NewClient(&http.Client{Timeout: 10 * time.Second}, "JP", cfg, client.NewRateLimitManager())
-	inventory := endpoint.NewInventoryAPI(cli)
+	inventory := inventory.NewInventoryAPI(cli)
 
-	params := &endpoint.GetInventorySummariesParams{
+	params := &inventory.GetInventorySummariesParams{
 		GranularityType: "Marketplace",
 		GranularityId:   "A1VC38T7YXB528", // Japan marketplace
 	}
@@ -76,21 +76,6 @@ func main() {
 | Method                  | Description                       |
 | ----------------------- | --------------------------------- |
 | `GetInventorySummaries` | Retrieves FBA inventory summaries |
-
----
-
-## Directory Structure
-
-```
-spapi/
-├── auth/                # OAuth2 & AWS Signature
-├── client/              # Shared HTTP client and rate limiter
-├── endpoint/            # Endpoint implementations (inventory, listings, etc.)
-│   ├── inventory.go
-│   ├── inventory_types.go
-│   ├── model/           # Shared types (e.g. Pagination, Granularity)
-├── testutil/            # Mocks and test helpers
-```
 
 ---
 
