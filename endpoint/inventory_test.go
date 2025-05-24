@@ -58,7 +58,7 @@ func TestGetInventorySummary_Success(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	expected := loadResponseStruct[*endpoint.GetInventorySummariesResponse](t, "inventory_summary.json")
+	expected := loadResponseStruct[*endpoint.GetInventorySummariesResponse](t, "get_inventory_summary_response.json")
 	assert.Equal(t, expected, got)
 }
 
