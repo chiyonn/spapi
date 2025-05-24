@@ -3,7 +3,7 @@ package inventory
 import (
 	"time"
 
-	"github.com/chiyonn/spapi/endpoint/internal/model"
+	"github.com/chiyonn/spapi/endpoint/model"
 )
 
 type GetInventorySummariesParams struct {

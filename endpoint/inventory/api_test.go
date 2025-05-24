@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/chiyonn/spapi/endpoint/internal/inventory"
+	"github.com/chiyonn/spapi/endpoint/inventory"
 	"github.com/chiyonn/spapi/testutil"
 )
 
