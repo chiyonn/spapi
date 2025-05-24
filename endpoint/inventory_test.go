@@ -4,6 +4,8 @@ package endpoint_test
 import (
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -13,13 +15,25 @@ import (
 	"github.com/chiyonn/spapi/testutil"
 )
 
+func loadResponseJSON(t *testing.T, name string) string {
+	t.Helper()
+
+	path := filepath.Join("testdata", name)
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("failed to read test data file %s: %v", path, err)
+	}
+	return string(bytes)
+}
+
 func TestGetInventorySummary_Success(t *testing.T) {
+	body := loadResponseJSON(t, "get_inventory_summary_response.json")
 	client := testutil.NewMockedClient(t, func(req *http.Request) *http.Response {
 		assert.Equal(t, "/fba/inventory/v1/summaries", req.URL.Path)
 
 		return &http.Response{
 			StatusCode: 200,
-			Body:       io.NopCloser(strings.NewReader(`{"summary":"value"}`)),
+			Body:       io.NopCloser(strings.NewReader(body)),
 			Header:     make(http.Header),
 		}
 	})
