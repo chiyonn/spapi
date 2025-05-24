@@ -1,4 +1,4 @@
-package endpoint
+package inventory
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/chiyonn/spapi/client"
+	"github.com/chiyonn/spapi/endpoint"
 	"github.com/google/go-querystring/query"
 )
 
@@ -21,7 +22,7 @@ func NewInventoryAPI(client *client.Client) *InventoryAPI {
 func (api *InventoryAPI) GetInventorySummaries(params *GetInventorySummariesParams) (*GetInventorySummariesResponse, error) {
 	const path = "/fba/inventory/v1/summaries"
 
-	endpoint, err := NewEndpoint(api.client, http.MethodGet, path, 2, 2, "inventory.GetInventorySummaries")
+	endpoint, err := endpoint.NewEndpoint(api.client, http.MethodGet, path, 2, 2, "inventory.GetInventorySummaries")
 	if err != nil {
 		return nil, err
 	}

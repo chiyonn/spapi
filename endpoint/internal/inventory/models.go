@@ -1,4 +1,4 @@
-package endpoint
+package inventory
 
 import (
 	"time"

@@ -1,5 +1,4 @@
-// endpoint/inventory_test.go
-package endpoint_test
+package inventory_test
 
 import (
 	"encoding/json"
@@ -12,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/chiyonn/spapi/endpoint"
+	"github.com/chiyonn/spapi/endpoint/internal/inventory"
 	"github.com/chiyonn/spapi/testutil"
 )
 
@@ -53,17 +52,17 @@ func TestGetInventorySummaries_Success(t *testing.T) {
 		}
 	})
 
-	params := &endpoint.GetInventorySummariesParams{
+	params := &inventory.GetInventorySummariesParams{
 		GranularityType: "Marketplace",
-		GranularityId: "maketplace_id",
+		GranularityId:   "maketplace_id",
 	}
 
-	api := endpoint.NewInventoryAPI(client)
+	api := inventory.NewInventoryAPI(client)
 	got, err := api.GetInventorySummaries(params)
 
 	assert.NoError(t, err)
 
-	expected := loadResponseStruct[*endpoint.GetInventorySummariesResponse](t, "get_inventory_summary_response.json")
+	expected := loadResponseStruct[*inventory.GetInventorySummariesResponse](t, "get_inventory_summary_response.json")
 	assert.Equal(t, expected, got)
 }
 
@@ -76,12 +75,12 @@ func TestGetInventorySummaries_BadJSON(t *testing.T) {
 		}
 	})
 
-	params := &endpoint.GetInventorySummariesParams{
+	params := &inventory.GetInventorySummariesParams{
 		GranularityType: "Marketplace",
-		GranularityId: "maketplace_id",
+		GranularityId:   "maketplace_id",
 	}
 
-	api := endpoint.NewInventoryAPI(client)
+	api := inventory.NewInventoryAPI(client)
 	_, err := api.GetInventorySummaries(params)
 
 	assert.Error(t, err) // JSON デコード失敗を期待
