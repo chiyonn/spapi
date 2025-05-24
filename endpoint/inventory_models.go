@@ -29,15 +29,15 @@ type GetInventorySummariesResult struct {
 }
 
 type InventorySummary struct {
-	ASIN             *string           `json:"asin"`
-	FNSKU            *string           `json:"fnSku"`
-	SellerSKU        *string           `json:"sellerSku"`
-	Condition        *string           `json:"condition"`
-	InventoryDetails *InventoryDetails `json:"inventoryDetails"`
-	LastUpdatedTime  *time.Time        `json:"lastUpdatedTime"`
-	ProductName      *string           `json:"productName"`
-	TotalQuantity    *int              `json:"totalQuantity"`
-	Stores           *[]string         `json:"stores"`
+	ASIN             *string            `json:"asin"`
+	FNSKU            *string            `json:"fnSku"`
+	SellerSKU        *string            `json:"sellerSku"`
+	Condition        *string            `json:"condition"`
+	InventoryDetails *InventoryDetails  `json:"inventoryDetails"`
+	LastUpdatedTime  model.NullableTime `json:"lastUpdatedTime"`
+	ProductName      *string            `json:"productName"`
+	TotalQuantity    *int               `json:"totalQuantity"`
+	Stores           *[]string          `json:"stores"`
 }
 
 type InventoryDetails struct {
