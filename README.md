@@ -53,14 +53,14 @@ func main() {
 	)
 
 	cli, _ := client.NewClient(&http.Client{Timeout: 10 * time.Second}, "JP", cfg, client.NewRateLimitManager())
-	inventory := inventory.NewInventoryAPI(cli)
+	invAPI := inventory.NewInventoryAPI(cli)
 
 	params := &inventory.GetInventorySummariesParams{
 		GranularityType: "Marketplace",
 		GranularityId:   "A1VC38T7YXB528", // Japan marketplace
 	}
 
-	res, err := inventory.GetInventorySummaries(params)
+	res, err := invAPI.GetInventorySummaries(params)
 	if err != nil {
 		panic(err)
 	}
