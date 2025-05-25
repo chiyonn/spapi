@@ -24,14 +24,15 @@ func (api *InventoryAPI) GetInventorySummaries(params *GetInventorySummariesPara
 	const burst = 2
 	const path = "/fba/inventory/v1/summaries"
 	const key = "inventory.GetInventorySummaries"
+	const method = http.MethodGet
 
-	endpoint, err := endpoint.NewEndpoint(api.client, http.MethodGet, path, rate, burst, key)
+	endpoint, err := endpoint.NewEndpoint(api.client, method, path, rate, burst, key)
 	if err != nil {
 		return nil, err
 	}
 
 	endpoint.BuildReq = func() (*http.Request, error) {
-		req, err := http.NewRequest(http.MethodGet, api.client.BaseURL+path, nil)
+		req, err := http.NewRequest(method, api.client.BaseURL+path, nil)
 		if err != nil {
 			return nil, err
 		}
