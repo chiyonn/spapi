@@ -1,11 +1,8 @@
 package inventory_test
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -15,33 +12,8 @@ import (
 	"github.com/chiyonn/spapi/testutil"
 )
 
-func loadResponseJSON(t *testing.T, name string) string {
-	t.Helper()
-
-	path := filepath.Join("testdata", name)
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("failed to read test data file %s: %v", path, err)
-	}
-	return string(bytes)
-}
-
-func loadResponseStruct[T any](t *testing.T, name string) T {
-	t.Helper()
-	path := filepath.Join("testdata", name)
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("failed to read test JSON: %v", err)
-	}
-	var result T
-	if err := json.Unmarshal(data, &result); err != nil {
-		t.Fatalf("failed to unmarshal test JSON: %v", err)
-	}
-	return result
-}
-
 func TestGetInventorySummaries_Success(t *testing.T) {
-	body := loadResponseJSON(t, "get_inventory_summary_response.json")
+	body := testutil.LoadResponseJSON(t, "get_inventory_summary_response.json")
 	client := testutil.NewMockedClient(t, func(req *http.Request) *http.Response {
 		assert.Equal(t, "/fba/inventory/v1/summaries", req.URL.Path)
 
@@ -62,7 +34,7 @@ func TestGetInventorySummaries_Success(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	expected := loadResponseStruct[*inventory.GetInventorySummariesResponse](t, "get_inventory_summary_response.json")
+	expected := testutil.LoadResponseStruct[*inventory.GetInventorySummariesResponse](t, "get_inventory_summary_response.json")
 	assert.Equal(t, expected, got)
 }
 
