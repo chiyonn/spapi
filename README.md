@@ -72,11 +72,17 @@ func main() {
 ---
 
 ## Available Endpoints
+### Inventory API
 
 | Method                  | Description                       |
 | ----------------------- | --------------------------------- |
 | `GetInventorySummaries` | Retrieves FBA inventory summaries |
 
+### ListingsItems API
+
+| Method                  | Description                       |
+| ----------------------- | --------------------------------- |
+| `PatchListingsItem` | Patch listings items (e.g.changing pricing) |
 ---
 
 ## License
