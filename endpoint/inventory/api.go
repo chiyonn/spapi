@@ -20,9 +20,12 @@ func NewInventoryAPI(client *client.Client) *InventoryAPI {
 }
 
 func (api *InventoryAPI) GetInventorySummaries(params *GetInventorySummariesParams) (*GetInventorySummariesResponse, error) {
+	const rate = 2.0
+	const burst = 2
 	const path = "/fba/inventory/v1/summaries"
+	const key = "inventory.GetInventorySummaries"
 
-	endpoint, err := endpoint.NewEndpoint(api.client, http.MethodGet, path, 2, 2, "inventory.GetInventorySummaries")
+	endpoint, err := endpoint.NewEndpoint(api.client, http.MethodGet, path, rate, burst, key)
 	if err != nil {
 		return nil, err
 	}
