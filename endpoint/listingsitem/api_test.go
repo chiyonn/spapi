@@ -1,4 +1,4 @@
-package listingitems_test
+package listingsitem_test
 
 import (
 	"io"
@@ -6,15 +6,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chiyonn/spapi/endpoint/listingitems"
+	"github.com/chiyonn/spapi/endpoint/listingsitem"
 	"github.com/chiyonn/spapi/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPatchListingItem(t *testing.T) {
+func TestPatchListingsItem(t *testing.T) {
 	body := testutil.LoadResponseJSON(t, "patch_listing_items_response.json")
 	client := testutil.NewMockedClient(t, func(req *http.Request) *http.Response {
-		assert.Equal(t, "/listings/2021-08-01/items/AAA/BBB", req.URL.Path)
+		assert.Equal(t, "/listings/2021-09-01/items/AAA/BBB", req.URL.Path)
 		assert.Equal(t, http.MethodPatch, req.Method)
 
 		return &http.Response{
@@ -24,15 +24,15 @@ func TestPatchListingItem(t *testing.T) {
 		}
 	})
 
-	params := &listingitems.PatchListingItemQuery{
+	params := &listingsitem.PatchListingsItemQuery{
 		MarketplaceIds: []string{"marketplaceid"},
 	}
 
-	api := listingitems.NewListingItemAPI(client)
-	got, err := api.PatchListingItem("AAA", "BBB", params)
+	api := listingsitem.NewListingsItemsAPI(client)
+	got, err := api.PatchListingsItem("AAA", "BBB", params)
 	assert.NoError(t, err)
 
-	expected := testutil.LoadResponseStruct[*listingitems.ListingItemSubmissionResponse](t, "patch_listing_items_response.json")
+	expected := testutil.LoadResponseStruct[*listingsitem.ListingsItemSubmissionResponse](t, "patch_listing_items_response.json")
 	assert.NoError(t, err)
 	assert.Equal(t, expected, got)
 }

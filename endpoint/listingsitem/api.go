@@ -1,4 +1,4 @@
-package listingitems
+package listingsitem
 
 import (
 	"context"
@@ -12,18 +12,18 @@ import (
 	"github.com/chiyonn/spapi/endpoint"
 )
 
-type ListingItemsAPI struct {
+type ListingsItemsAPI struct {
 	client *client.Client
 }
 
-func NewListingItemAPI(client *client.Client) *ListingItemsAPI {
-	return &ListingItemsAPI{client: client}
+func NewListingsItemsAPI(client *client.Client) *ListingsItemsAPI {
+	return &ListingsItemsAPI{client: client}
 }
 
-func (api *ListingItemsAPI) PatchListingItem(sellerID string, sku string, params *PatchListingItemQuery) (*ListingItemSubmissionResponse, error) {
+func (api *ListingsItemsAPI) PatchListingsItem(sellerID string, sku string, params *PatchListingsItemQuery) (*ListingsItemSubmissionResponse, error) {
 	const rate = 5.0
 	const burst = 5
-	path := fmt.Sprintf("/listings/2021-08-01/items/%s/%s", sellerID, sku)
+	path := fmt.Sprintf("/listings/2021-09-01/items/%s/%s", sellerID, sku)
 	const key = "inventory.GetInventorySummaries"
 	const method = http.MethodPatch
 
@@ -70,7 +70,7 @@ func (api *ListingItemsAPI) PatchListingItem(sellerID string, sku string, params
 	}
 
 	endpoint.ParseResp = func(resp *http.Response) (any, error) {
-		var res ListingItemSubmissionResponse
+		var res ListingsItemSubmissionResponse
 		if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 			return nil, err
 		}
@@ -82,7 +82,7 @@ func (api *ListingItemsAPI) PatchListingItem(sellerID string, sku string, params
 		return nil, err
 	}
 
-	resp, ok := result.(*ListingItemSubmissionResponse)
+	resp, ok := result.(*ListingsItemSubmissionResponse)
 	if !ok {
 		return nil, fmt.Errorf("unexpected response type: %T", result)
 	}

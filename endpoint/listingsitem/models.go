@@ -1,17 +1,17 @@
-package listingitems
+package listingsitem
 
 import "time"
 
 
-type PatchListingItemQuery struct {
+type PatchListingsItemQuery struct {
 	MarketplaceIds []string `json:"marketplaceIds"`
 	IncludedData *[]string `json:"includedData"`
 	Mode *string `json:"mode"`
 	IssueLocale *string `json:"issueLocale"`
-	Body *ListingItemPatchRequest `json:"body"`
+	Body *ListingsItemPatchRequest `json:"body"`
 }
 
-type ListingItemPatchRequest struct {
+type ListingsItemPatchRequest struct {
 	ProductType string `json:"productType"`
 	Patches []PatchOperation `json:"patches"`
 }
@@ -22,7 +22,7 @@ type PatchOperation struct {
 	Value *[]any `json:"value"`
 }
 
-type ListingItemSubmissionResponse struct {
+type ListingsItemSubmissionResponse struct {
 	SKU string `json:"sku"`
 	Status string `json:"status"`
 	SubmissionID string `json:"submissionId"`
