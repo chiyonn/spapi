@@ -19,7 +19,7 @@ func NewInventoryAPI(client *client.Client) *InventoryAPI {
 	return &InventoryAPI{client: client}
 }
 
-func (api *InventoryAPI) GetInventorySummaries(params *GetInventorySummariesParams) (*GetInventorySummariesResponse, error) {
+func (api *InventoryAPI) GetInventorySummaries(ctx context.Context, params *GetInventorySummariesParams) (*GetInventorySummariesResponse, error) {
 	const rate = 2.0
 	const burst = 2
 	const path = "/fba/inventory/v1/summaries"
@@ -56,7 +56,7 @@ func (api *InventoryAPI) GetInventorySummaries(params *GetInventorySummariesPara
 		return &res, nil
 	}
 
-	result, err := endpoint.Do(context.Background())
+	result, err := endpoint.Do(ctx)
 	if err != nil {
 		return nil, err
 	}

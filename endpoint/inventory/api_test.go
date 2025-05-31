@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"context"
 
 	"github.com/stretchr/testify/assert"
 
@@ -30,7 +31,7 @@ func TestGetInventorySummaries_Success(t *testing.T) {
 	}
 
 	api := inventory.NewInventoryAPI(client)
-	got, err := api.GetInventorySummaries(params)
+	got, err := api.GetInventorySummaries(context.Background(), params)
 
 	assert.NoError(t, err)
 
@@ -53,7 +54,7 @@ func TestGetInventorySummaries_BadJSON(t *testing.T) {
 	}
 
 	api := inventory.NewInventoryAPI(client)
-	_, err := api.GetInventorySummaries(params)
+	_, err := api.GetInventorySummaries(context.Background(), params)
 
 	assert.Error(t, err) // JSON デコード失敗を期待
 }

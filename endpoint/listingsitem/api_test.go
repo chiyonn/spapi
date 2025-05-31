@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"context"
 
 	"github.com/chiyonn/spapi/endpoint/listingsitem"
 	"github.com/chiyonn/spapi/testutil"
@@ -29,7 +30,7 @@ func TestPatchListingsItem(t *testing.T) {
 	}
 
 	api := listingsitem.NewListingsItemsAPI(client)
-	got, err := api.PatchListingsItem("AAA", "BBB", params)
+	got, err := api.PatchListingsItem(context.Background(), "AAA", "BBB", params)
 	assert.NoError(t, err)
 
 	expected := testutil.LoadResponseStruct[*listingsitem.ListingsItemSubmissionResponse](t, "patch_listing_items_response.json")

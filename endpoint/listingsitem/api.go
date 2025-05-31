@@ -20,7 +20,7 @@ func NewListingsItemsAPI(client *client.Client) *ListingsItemsAPI {
 	return &ListingsItemsAPI{client: client}
 }
 
-func (api *ListingsItemsAPI) PatchListingsItem(sellerID string, sku string, params *PatchListingsItemQuery) (*ListingsItemSubmissionResponse, error) {
+func (api *ListingsItemsAPI) PatchListingsItem(ctx context.Context, sellerID string, sku string, params *PatchListingsItemQuery) (*ListingsItemSubmissionResponse, error) {
 	const rate = 5.0
 	const burst = 5
 	path := fmt.Sprintf("/listings/2021-09-01/items/%s/%s", sellerID, sku)
@@ -77,7 +77,7 @@ func (api *ListingsItemsAPI) PatchListingsItem(sellerID string, sku string, para
 		return &res, nil
 	}
 
-	result, err := endpoint.Do(context.Background())
+	result, err := endpoint.Do(ctx)
 	if err != nil {
 		return nil, err
 	}
