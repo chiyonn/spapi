@@ -1,69 +1,41 @@
+// inventory/inventory.go
 package inventory
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
 
 	"github.com/chiyonn/spapi/client"
 	"github.com/chiyonn/spapi/endpoint"
-	"github.com/google/go-querystring/query"
 )
 
 type InventoryAPI struct {
 	client *client.Client
 }
 
-func NewInventoryAPI(client *client.Client) *InventoryAPI {
-	return &InventoryAPI{client: client}
+func NewInventoryAPI(c *client.Client) *InventoryAPI {
+	return &InventoryAPI{client: c}
 }
 
-func (api *InventoryAPI) GetInventorySummaries(ctx context.Context, params *GetInventorySummariesParams) (*GetInventorySummariesResponse, error) {
-	const rate = 2.0
-	const burst = 2
-	const path = "/fba/inventory/v1/summaries"
-	const key = "inventory.GetInventorySummaries"
-	const method = http.MethodGet
+func (api *InventoryAPI) GetInventorySummaries(
+	ctx context.Context,
+	params *GetInventorySummariesParams,
+) (*GetInventorySummariesResponse, error) {
+	const (
+		path  = "/fba/inventory/v1/summaries"
+		key   = "inventory.GetInventorySummaries"
+		rate  = 2.0
+		burst = 2
+	)
 
-	endpoint, err := endpoint.NewEndpoint(api.client, method, path, rate, burst, key)
+	ep, err := endpoint.NewJSONGet[GetInventorySummariesParams, GetInventorySummariesResponse](
+		api.client,
+		path,
+		key,
+		rate,
+		burst,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build new endpoint: %w", err)
+		return nil, err
 	}
-
-	endpoint.BuildReq = func() (*http.Request, error) {
-		req, err := http.NewRequest(method, api.client.BaseURL+path, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build new request: %w", err)
-		}
-
-		if params != nil {
-			values, err := query.Values(params)
-			if err != nil {
-				return nil, fmt.Errorf("failed to encode request params: %w", err)
-			}
-			req.URL.RawQuery = values.Encode()
-		}
-
-		return req, nil
-	}
-
-	endpoint.ParseResp = func(resp *http.Response) (any, error) {
-		var res GetInventorySummariesResponse
-		if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-			return nil, fmt.Errorf("failed to decode response body: %w", err)
-		}
-		return &res, nil
-	}
-
-	result, err := endpoint.Do(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute endpoint: %w", err)
-	}
-
-	resp, ok := result.(*GetInventorySummariesResponse)
-	if !ok {
-		return nil, fmt.Errorf("unexpected response type: %T", result)
-	}
-	return resp, nil
+	return ep.Do(ctx, params)
 }

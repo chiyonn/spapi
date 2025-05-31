@@ -1,39 +1,143 @@
 package endpoint
 
 import (
+	"io"
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
+	"reflect"
 
 	"github.com/chiyonn/spapi/client"
+	"github.com/google/go-querystring/query"
 )
 
-type APIEndpoint struct {
-	c    	  *client.Client
-	Path      string
-	Method    string
-	Rate      float64
-	Burst     int
-	RateKey   string
-	BuildReq  func() (*http.Request, error)
-	ParseResp func(*http.Response) (any, error)
+type reqEnc[Req any] func(r *http.Request, p *Req) error
+
+type Endpoint[Req any, Res any] struct {
+	c      *client.Client
+	Method string
+	Path   string
+	Rate   float64
+	Burst  int
+	Key    string
+
+	encode reqEnc[Req] // nil ならデフォルト
+	decode func(*http.Response, *Res) error
 }
 
-func (ep *APIEndpoint) Do(ctx context.Context) (any, error) {
-	if ep.c == nil || ep.c.HTTPClient == nil {
-		return nil, errors.New("client or HTTPClient is nil")
+func NewJSONGet[Req any, Res any](
+	cl *client.Client,
+	path string,
+	key string,
+	rate float64,
+	burst int,
+) (*Endpoint[Req, Res], error) {
+	if cl == nil {
+		return nil, ErrNoClient
 	}
 
-	if err := ep.c.RateLimitManager.Wait(ctx, ep.RateKey); err != nil {
+	ep := &Endpoint[Req, Res]{
+		c:      cl,
+		Method: http.MethodGet,
+		Path:   path,
+		Rate:   rate,
+		Burst:  burst,
+		Key:    key,
+		decode: func(resp *http.Response, v *Res) error {
+			return json.NewDecoder(resp.Body).Decode(v)
+		},
+		encode: func(r *http.Request, p *Req) error {
+			if p == nil || isEmptyStruct(*p) {
+				return nil
+			}
+			v, err := query.Values(p)
+			if err != nil {
+				return err
+			}
+			r.URL.RawQuery = v.Encode()
+			return nil
+		},
+	}
+	if err := cl.RateLimitManager.Register(key, rate, burst); err != nil {
 		return nil, err
 	}
 
-	req, err := ep.BuildReq()
+	return ep, nil
+}
+
+func NewJSONPatch[Req any, Res any](
+	cl *client.Client,
+	path, key string,
+	rate float64, burst int,
+) (*Endpoint[Req, Res], error) {
+	if cl == nil {
+		return nil, ErrNoClient
+	}
+
+	ep := &Endpoint[Req, Res]{
+		c:      cl,
+		Method: http.MethodPatch,
+		Path:   path,
+		Rate:   rate,
+		Burst:  burst,
+		Key:    key,
+		decode: func(resp *http.Response, v *Res) error {
+			return json.NewDecoder(resp.Body).Decode(v)
+		},
+	}
+
+	ep.encode = func(r *http.Request, p *Req) error {
+		if p == nil {
+			return nil
+		}
+
+		vals, err := query.Values(p)
+		if err != nil {
+			return err
+		}
+		if len(vals) != 0 {
+			r.URL.RawQuery = vals.Encode()
+		}
+
+		rv := reflect.ValueOf(p).Elem()
+		if f := rv.FieldByName("Body"); f.IsValid() && !f.IsNil() {
+			buf := new(bytes.Buffer)
+			if err := json.NewEncoder(buf).Encode(f.Interface()); err != nil {
+				return err
+			}
+			r.Body = io.NopCloser(buf)
+			r.ContentLength = int64(buf.Len())
+			r.Header.Set("Content-Type", "application/json")
+		}
+		return nil
+	}
+
+	if err := cl.RateLimitManager.Register(key, rate, burst); err != nil {
+		return nil, err
+	}
+	return ep, nil
+}
+
+func (ep *Endpoint[Req, Res]) Do(
+	ctx context.Context, params *Req,
+) (*Res, error) {
+	if ep.c == nil || ep.c.HTTPClient == nil {
+		return nil, errors.New("client nil")
+	}
+	if err := ep.c.RateLimitManager.Wait(ctx, ep.Key); err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(ep.Method, ep.c.BaseURL+ep.Path, nil)
 	if err != nil {
 		return nil, err
 	}
-	if req == nil {
-		return nil, errors.New("BuildReq returned nil request")
+	if ep.encode != nil {
+		if err := ep.encode(req, params); err != nil {
+			return nil, err
+		}
 	}
 
 	token, err := ep.c.Auth.GetAccessToken(ctx)
@@ -49,50 +153,18 @@ func (ep *APIEndpoint) Do(ctx context.Context) (any, error) {
 	}
 	defer resp.Body.Close()
 
-	return ep.ParseResp(resp)
+	var out Res
+	if ep.decode != nil {
+		if err := ep.decode(resp, &out); err != nil {
+			return nil, err
+		}
+	}
+	return &out, nil
 }
 
-// TODO: key, rate, bust must combined as a struct
-func NewEndpoint(client *client.Client, method string, path string, rate float64, burst int, key string) (*APIEndpoint, error) {
-	if client == nil {
-		return nil, ErrEmptyClientDetected
-	}
-	if method == "" {
-		return nil, ErrEmptyMethodDetected
-	}
-	if path == "" {
-		return nil, ErrEmptyPathDetected
-	}
-	if key == "" {
-		return nil, ErrEmptyRateKeyDetected
-	}
-	if rate <= 0 {
-		return nil, ErrEmptyRateDetected
-	}
-	if burst <= 0 {
-		return nil, ErrEmptyBurstRateDetected
-	}
-
-	endpoint := APIEndpoint{
-		c:  client,
-		Method:  method,
-		Path:    path,
-		RateKey: key,
-	}
-
-	err := endpoint.c.RateLimitManager.Register(key, rate, burst)
-	if err != nil {
-		return nil, ErrInitRateLimitManager
-	}
-	return &endpoint, nil
+func isEmptyStruct(v any) bool {
+	rv := reflect.ValueOf(v)
+	return rv.Kind() == reflect.Struct && rv.NumField() == 0
 }
 
-var (
-	ErrInitRateLimitManager   = errors.New("failed to initialize RateLimitManager")
-	ErrEmptyClientDetected    = errors.New("client must not be nil")
-	ErrEmptyMethodDetected    = errors.New("method must not be nil")
-	ErrEmptyPathDetected      = errors.New("path must not be nil")
-	ErrEmptyRateKeyDetected   = errors.New("rate key must not be nil")
-	ErrEmptyRateDetected      = errors.New("rate must not be nil")
-	ErrEmptyBurstRateDetected = errors.New("rate burst not be nil")
-)
+var ErrNoClient = errors.New("client must be set")
