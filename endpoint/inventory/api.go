@@ -28,19 +28,19 @@ func (api *InventoryAPI) GetInventorySummaries(ctx context.Context, params *GetI
 
 	endpoint, err := endpoint.NewEndpoint(api.client, method, path, rate, burst, key)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to build new endpoint: %w", err)
 	}
 
 	endpoint.BuildReq = func() (*http.Request, error) {
 		req, err := http.NewRequest(method, api.client.BaseURL+path, nil)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to build new request: %w", err)
 		}
 
 		if params != nil {
 			values, err := query.Values(params)
 			if err != nil {
-				return nil, fmt.Errorf("failed to encode query params: %w", err)
+				return nil, fmt.Errorf("failed to encode request params: %w", err)
 			}
 			req.URL.RawQuery = values.Encode()
 		}
@@ -51,14 +51,14 @@ func (api *InventoryAPI) GetInventorySummaries(ctx context.Context, params *GetI
 	endpoint.ParseResp = func(resp *http.Response) (any, error) {
 		var res GetInventorySummariesResponse
 		if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to decode response body: %w", err)
 		}
 		return &res, nil
 	}
 
 	result, err := endpoint.Do(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to execute endpoint: %w", err)
 	}
 
 	resp, ok := result.(*GetInventorySummariesResponse)

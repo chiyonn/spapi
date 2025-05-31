@@ -29,13 +29,13 @@ func (api *ListingsItemsAPI) PatchListingsItem(ctx context.Context, sellerID str
 
 	endpoint, err := endpoint.NewEndpoint(api.client, method, path, rate, burst, key)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to build new endpoint: %w", err)
 	}
 
 	endpoint.BuildReq = func() (*http.Request, error) {
 		u, err := url.Parse(api.client.BaseURL + path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to parse url: %w", err)
 		}
 		q := u.Query()
 		for _, v := range params.MarketplaceIds {
@@ -57,13 +57,13 @@ func (api *ListingsItemsAPI) PatchListingsItem(ctx context.Context, sellerID str
 		var buf bytes.Buffer
 		if params.Body != nil {
 			if err := json.NewEncoder(&buf).Encode(params.Body); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to parse request body: %w", err)
 			}
 		}
 
 		req, err := http.NewRequest(method, u.String(), &buf)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to build new request: %w", err)
 		}
 		req.Header.Set("Content-Type", "application/json")
 		return req, nil
@@ -72,14 +72,14 @@ func (api *ListingsItemsAPI) PatchListingsItem(ctx context.Context, sellerID str
 	endpoint.ParseResp = func(resp *http.Response) (any, error) {
 		var res ListingsItemSubmissionResponse
 		if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to decode response body: %w", err)
 		}
 		return &res, nil
 	}
 
 	result, err := endpoint.Do(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to execute endpoint: %w", err)
 	}
 
 	resp, ok := result.(*ListingsItemSubmissionResponse)
