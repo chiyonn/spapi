@@ -1,12 +1,12 @@
 package listingsitem
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
-	"bytes"
 	"fmt"
-	"net/url"
 	"net/http"
+	"net/url"
 
 	"github.com/chiyonn/spapi/client"
 	"github.com/chiyonn/spapi/endpoint"
@@ -24,7 +24,7 @@ func (api *ListingsItemsAPI) PatchListingsItem(sellerID string, sku string, para
 	const rate = 5.0
 	const burst = 5
 	path := fmt.Sprintf("/listings/2021-09-01/items/%s/%s", sellerID, sku)
-	const key = "inventory.GetInventorySummaries"
+	const key = "listingsitem.PatchListingsItem"
 	const method = http.MethodPatch
 
 	endpoint, err := endpoint.NewEndpoint(api.client, method, path, rate, burst, key)
