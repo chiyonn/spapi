@@ -27,7 +27,7 @@ func TestGetPricing_Success(t *testing.T) {
 
 	params := &productpricing.GetPricingParams{
 		MarketplaceIds: "marketpkaceid",
-		ASINs: &[]string{"ASIN01", "ASIN02"},
+		ASINs: []string{"ASIN01", "ASIN02"},
 		ItemType: "Asin",
 	}
 

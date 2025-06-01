@@ -38,3 +38,10 @@ func (api *ProductPricingAPI) GetPricing(
 	}
 	return ep.Do(ctx, params)
 }
+
+func (api *ProductPricingAPI) GetItemOffersBatch(
+	ctx context.Context,
+	params *GetItemOffersBatchParams,
+) (*GetItemOffersBatchResponse, error) {
+	return nil, nil
+}
