@@ -1,7 +1,5 @@
 package listingsitem
 
-import "github.com/chiyonn/spapi/endpoint/types"
-
 type PatchListingsItemQuery struct {
 	MarketplaceIds []string                 `json:"marketplaceIds"`
 	IncludedData   []string                 `json:"includedData"`
@@ -24,7 +22,4 @@ type PatchOperation struct {
 type ListingsItemSubmissionResponse struct {
 	SKU          string        `json:"sku"`
 	Status       string        `json:"status"`
-	SubmissionID string        `json:"submissionId"`
-	Issues       []types.Issue `json:"issues"`
-	Identifiers  []string      `json:"identifiers"`
 }
